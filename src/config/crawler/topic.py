@@ -9,14 +9,14 @@ class TopicConfig(BaseConfig):
     _path: str = f'{BaseConfig._path}/crawler/topic.ini'
 
     def __init__(self: TopicConfig) -> None:
-        self.topics: dict = {}
+        self.topic_configs: dict = {}
 
         if not self._initialized:
             self._initialize()
 
-    def _initialize(self: TopicConfig):
+    def _initialize(self: TopicConfig) -> None:
         config: ConfigParser = self._load(self._path)
 
-        self.topics = {section: dict(config.items(section)) for section in config.sections() if section != 'root'}
+        self.topic_configs = {section: dict(config.items(section)) for section in config.sections() if section != 'root'}
 
         self._initialized = True

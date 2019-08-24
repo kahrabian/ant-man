@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from configparser import ConfigParser
 
-from src.common.singleton import SingletonMetaClass
+from ..common.singleton import SingletonMetaClass
 
 
 class BaseConfig(object, metaclass=SingletonMetaClass):
@@ -16,5 +16,5 @@ class BaseConfig(object, metaclass=SingletonMetaClass):
         config.read(path, 'utf-8')
         return config
 
-    def _initialize(self: BaseConfig):
+    def _initialize(self: BaseConfig) -> None:
         assert NotImplementedError(f'This method should be implemented by the {self.__class__} class')
