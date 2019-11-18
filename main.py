@@ -20,9 +20,9 @@ def config_logging(path: str, log_level: str = 'INFO') -> None:
 
 
 def main() -> None:
-    from src.crawler.topic import TopicCrawler
+    from src.crawler.issue import IssueCrawler
     config_logging('./log/crawler.log')
-    TopicCrawler().run()
+    IssueCrawler().run()
 
 
 if __name__ == '__main__':

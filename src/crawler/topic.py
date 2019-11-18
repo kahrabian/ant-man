@@ -4,10 +4,6 @@ import json
 import logging
 import re
 from datetime import datetime
-from time import sleep
-from urllib.parse import unquote
-
-import requests
 
 from .base import BaseCrawler
 from ..common.decorator import handle_exception
@@ -17,14 +13,14 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 class TopicCrawler(BaseCrawler):
-    _path: str = f'{BaseCrawler._path}/repositories'
+    _path: str = f'{BaseCrawler._path}/search/repositories'
     _save_path: str = f'{BaseCrawler._save_path}/topic'
+    _save_field: str = 'items'
+    _headers: dict = {'Accept': 'application/vnd.github.mercy-preview+json'}
+    _page_limit: str = '34'
     _config: TopicConfig = TopicConfig()
 
-    _req_delay: int = 6
-    _link_regex: re.Pattern = re.compile(r'<(?P<url>[^;]+)>; rel="(?P<rel>[^,]+)"')
-    _page_regex: re.Pattern = re.compile(r'(?<=&page=)(?P<page>\d+)$')
-    _log_search_regex: re.Pattern = re.compile(r'(?<=\?)(?P<query_params>.+)$')
+    _log_retrieve_regex: re.Pattern = re.compile(r'(?<=\?)(?P<query_params>.+)$')
     _time_format: str = '%Y-%m-%dT%H:%M:%S'
     _initial_offset: float = 60 * 60 * 24 * 365 * 1.0
     _increase_rate: float = 1.25
@@ -38,41 +34,6 @@ class TopicCrawler(BaseCrawler):
         end: str = datetime.utcfromtimestamp(latest).strftime(self._time_format)
         return f'{self._path}?q={q}+created:{start}..{end}&sort={sort}&order={order}&page=1'
 
-    def _save(self: TopicCrawler, name: str, repos: list) -> int:
-        num_repos: int = len(repos)
-        with open(f'{self._save_path}/{name}.json', 'a') as f:
-            for repo in repos:
-                data: str = json.dumps(repo)
-                f.write(f'{data}\n')
-        return num_repos
-
-    def _search(self: TopicCrawler, name: str, path: str) -> int:
-        sleep(self._req_delay)  # NOTE: To avoid rate limiting
-
-        query_params: str = re.findall(self._log_search_regex, path)[0]
-        logger.info(f'starting crawling process for {query_params}')
-
-        response: requests.Response = requests.get(path)
-        content: str = response.content.decode('utf-8')
-
-        if not response.ok:
-            raise Exception(f'something went wrong while crawling: {content}')
-
-        logger.info(
-            f'crawling process finished with status code {response.status_code}')
-
-        page_num: str = re.findall(self._page_regex, path)[0]
-        link: list = {x[1]: unquote(x[0]) for x in re.findall(self._link_regex, response.headers.get('link', ''))}
-        if page_num == '1' and 'last' in link:
-            page_count: str = re.findall(self._page_regex, link['last'])[0]
-            if page_count == '34':
-                return -1  # NOTE: Should limit the query to avoid result limiting
-
-        json_content: dict = json.loads(content)
-        num_repos: int = self._save(name, json_content['items'])
-        num_repos += self._search(name, link['next']) if 'next' in link else 0
-        return num_repos
-
     @handle_exception
     def _crawl(self: TopicCrawler, name: str, topic_config: dict) -> None:
         latest: float = datetime.utcnow().timestamp()
@@ -80,10 +41,10 @@ class TopicCrawler(BaseCrawler):
         total_repos: int = 0
         while latest > 0:
             path: str = self._build_path(topic_config, latest, offset)
-            num_repos: int = self._search(name, path)
+            num_repos: int = self._retrieve(name, path)
             if num_repos == -1:
                 offset *= self._decrease_rate
-                query_params: str = re.findall(self._log_search_regex, path)[0]
+                query_params: str = re.findall(self._log_retrieve_regex, path)[0]
                 logger.info(f'result limiting occured while crawling {query_params}')
                 continue
             total_repos += num_repos
