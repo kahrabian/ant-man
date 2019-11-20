@@ -19,12 +19,16 @@ def config_logging(path: str, log_level: str = 'INFO') -> None:
     logger.addHandler(file_handler)
 
 
-def main() -> None:
-    from src.crawler.issue import IssueCrawler
+def run() -> int:
+    from src.crawler.topic import TopicCrawler
+    TopicCrawler().run()
+    return 0
+
+
+def main() -> int:
     config_logging('./log/crawler.log')
-    IssueCrawler().run()
+    return run()
 
 
 if __name__ == '__main__':
-    main()
-    exit(0)
+    exit(main())
