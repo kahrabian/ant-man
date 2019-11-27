@@ -20,8 +20,8 @@ def config_logging(path: str, log_level: str = 'INFO') -> None:
 
 
 def run() -> int:
-    from src.crawler.topic import TopicCrawler
-    TopicCrawler().run()
+    from src.crawler.comment import CommentCrawler
+    CommentCrawler().run()
     return 0
 
 

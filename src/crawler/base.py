@@ -25,6 +25,7 @@ class BaseCrawler(object):
     _req_delay: int = 6
     _link_regex: re.Pattern = re.compile(r'<(?P<url>[^;]+)>; rel="(?P<rel>[^,]+)"')
     _page_regex: re.Pattern = re.compile(r'(?<=&page=)(?P<page>\d+)$')
+    _log_retrieve_regex: re.Pattern = re.compile(r'(?<=\?)(?P<query_params>.+)$')
 
     def _save(self: BaseCrawler, name: str, contents: dict) -> int:
         mdirs: list = re.findall(self._mdirs_regex, name)
@@ -41,7 +42,9 @@ class BaseCrawler(object):
     def _retrieve(self: BaseCrawler, name: str, path: str) -> int:
         sleep(self._req_delay)  # NOTE: To avoid rate limiting
 
-        query_params: str = re.findall(self._log_retrieve_regex, path)[0]
+        query_params: str = ''
+        if re.search(self._log_retrieve_regex, path):
+            query_params = re.findall(self._log_retrieve_regex, path)[0]
         logger.info(f'starting crawling process for {query_params}')
 
         response: requests.Response = requests.get(path, headers=self._headers)
@@ -65,4 +68,5 @@ class BaseCrawler(object):
         return num_contents
 
     def run(self: BaseCrawler) -> None:
-        raise NotImplementedError(f'This method should be implemented by the {self.__class__} class')
+        for config in self._config.configs.values():
+            self._crawl(config)

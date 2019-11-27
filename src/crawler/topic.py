@@ -20,7 +20,6 @@ class TopicCrawler(BaseCrawler):
     _page_limit: str = '34'
     _config: TopicConfig = TopicConfig()
 
-    _log_retrieve_regex: re.Pattern = re.compile(r'(?<=\?)(?P<query_params>.+)$')
     _time_format: str = '%Y-%m-%dT%H:%M:%S'
     _initial_offset: float = 60 * 60 * 24 * 365 * 1.0
     _increase_rate: float = 1.25
@@ -35,7 +34,8 @@ class TopicCrawler(BaseCrawler):
         return f'{self._path}?q={q}+created:{start}..{end}&sort={sort}&order={order}&page=1'
 
     @handle_exception
-    def _crawl(self: TopicCrawler, name: str, topic_config: dict) -> None:
+    def _crawl(self: TopicCrawler, topic_config: dict) -> None:
+        name: str = topic_config['name']
         latest: float = datetime.utcnow().timestamp()
         offset: float = self._initial_offset
         total_repos: int = 0
@@ -51,7 +51,3 @@ class TopicCrawler(BaseCrawler):
             offset *= self._increase_rate
             latest -= offset
             logger.info(f'successfully crawled {num_repos} repositories, total of {total_repos} repositories so far')
-
-    def run(self: TopicCrawler) -> None:
-        for name, topic_config in self._config.topic_configs.items():
-            self._crawl(name, topic_config)
