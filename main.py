@@ -3,6 +3,8 @@ import sys
 from logging import Formatter, RootLogger, StreamHandler
 from logging.handlers import RotatingFileHandler
 
+from src.crawler import *
+
 
 def config_logging(path: str, log_level: str = 'INFO') -> None:
     logger: RootLogger = logging.getLogger()
@@ -20,7 +22,8 @@ def config_logging(path: str, log_level: str = 'INFO') -> None:
 
 
 def run() -> int:
-    from src.crawler.comment import CommentCrawler
+    TopicCrawler().run()
+    IssueCrawler().run()
     CommentCrawler().run()
     return 0
 

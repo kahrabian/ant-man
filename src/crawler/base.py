@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+from datetime import datetime
 from time import sleep
 from urllib.parse import unquote
 
@@ -22,7 +23,6 @@ class BaseCrawler(object):
     _config: BaseConfig = None
 
     _mdirs_regex: re.Pattern = re.compile(r'(.*)/.*$')
-    _req_delay: int = 6
     _link_regex: re.Pattern = re.compile(r'<(?P<url>[^;]+)>; rel="(?P<rel>[^,]+)"')
     _page_regex: re.Pattern = re.compile(r'(?<=&page=)(?P<page>\d+)$')
     _log_retrieve_regex: re.Pattern = re.compile(r'(?<=\?)(?P<query_params>.+)$')
@@ -40,14 +40,18 @@ class BaseCrawler(object):
         return len(contents)
 
     def _retrieve(self: BaseCrawler, name: str, path: str) -> int:
-        sleep(self._req_delay)  # NOTE: To avoid rate limiting
-
         query_params: str = ''
         if re.search(self._log_retrieve_regex, path):
             query_params = re.findall(self._log_retrieve_regex, path)[0]
         logger.info(f'starting crawling process for {query_params}')
 
+        token: str = os.getenv('OAUTH_TOKEN', '')
+        self._headers['Authorization'] = f'token {token}'
         response: requests.Response = requests.get(path, headers=self._headers)
+        if response.headers['X-RateLimit-Remaining'] == '0':
+            sleep_time: int = int(response.headers['X-RateLimit-Reset']) - datetime.now().timestamp()
+            logger.info(f'sleeping for {sleep_time} to avoid rate limiting')
+            sleep(sleep_time)
         content: str = response.content.decode('utf-8')
 
         if not response.ok:
