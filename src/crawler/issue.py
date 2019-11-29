@@ -32,8 +32,8 @@ class IssueCrawler(BaseCrawler):
             repos: list = f.read().split('\n')
         total_issues: int = 0
         for repo_info in repos[:-1]:
-            full_name: str = json.loads(repo_info)['full_name']
-            path: str = self._build_path(issue_config, full_name)
-            num_issues: int = self._retrieve(full_name, path)
+            name: str = json.loads(repo_info)['full_name']
+            path: str = self._build_path(issue_config, name)
+            num_issues: int = self._retrieve(name, path)
             total_issues += num_issues
             logger.info(f'successfully crawled {num_issues} issues, total of {total_issues} issues so far')

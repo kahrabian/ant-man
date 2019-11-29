@@ -18,6 +18,8 @@ class BaseCrawler(object):
     _path: str = 'https://api.github.com'
     _save_path: str = './data'
     _save_field: str = None
+    _incomplete_dir: str = 'incomplete'
+    _complete_dir: str = 'complete'
     _headers: dict = None
     _page_limit: str = None
     _config: BaseConfig = None
@@ -30,16 +32,26 @@ class BaseCrawler(object):
     def _save(self: BaseCrawler, name: str, contents: dict) -> int:
         mdirs: list = re.findall(self._mdirs_regex, name)
         if len(mdirs) > 0:
-            os.makedirs(f'{self._save_path}/{mdirs[0]}', exist_ok=True)
+            os.makedirs(f'{self._save_path}/{self._incomplete_dir}/{mdirs[0]}', exist_ok=True)
+            os.makedirs(f'{self._save_path}/{self._complete_dir}/{mdirs[0]}', exist_ok=True)
         if self._save_field is not None:
             contents = contents[self._save_field]
-        with open(f'{self._save_path}/{name}.json', 'a') as f:
+        with open(f'{self._save_path}/{self._incomplete_dir}/{name}.json', 'a') as f:
             for content in contents:
                 data: str = json.dumps(content)
                 f.write(f'{data}\n')
         return len(contents)
 
-    def _retrieve(self: BaseCrawler, name: str, path: str) -> int:
+    def _retrieve(self: BaseCrawler, name: str, path: str, root: bool = True) -> int:
+        complete_path: str = f'{self._save_path}/{self._complete_dir}/{name}.json'
+        if os.path.exists(complete_path):
+            logger.info(f'already crawled {complete_path}')
+            return 0
+
+        incomplete_path: str = f'{self._save_path}/{self._incomplete_dir}/{name}.json'
+        if root and os.path.exists(incomplete_path):
+            os.remove(incomplete_path)
+
         query_params: str = ''
         if re.search(self._log_retrieve_regex, path):
             query_params = re.findall(self._log_retrieve_regex, path)[0]
@@ -68,8 +80,17 @@ class BaseCrawler(object):
 
         json_content: dict = json.loads(content)
         num_contents: int = self._save(name, json_content)
-        num_contents += self._retrieve(name, link['next']) if 'next' in link else 0
+
+        if 'next' in link:
+            num_contents += self._retrieve(name, link['next'], root=False)
+        else:
+            os.rename(f'{self._save_path}/{self._incomplete_dir}/{name}.json',
+            f'{self._save_path}/{self._complete_dir}/{name}.json')
+
         return num_contents
+
+    def _crawl(self: TopicCrawler, topic_config: dict) -> None:
+        raise NotImplementedError(f'this method should be implemented in class {self.__class__}')
 
     def run(self: BaseCrawler) -> None:
         for config in self._config.configs.values():

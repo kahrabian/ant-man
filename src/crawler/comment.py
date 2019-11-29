@@ -33,7 +33,8 @@ class CommentCrawler(BaseCrawler):
             total_issues: int = 0
             for issue_info in issues[:-1]:
                 path: str = self._build_path(json.loads(issue_info)['comments_url'])
-                num_issues: int = self._retrieve('/'.join(re.match(self._name_regex, path).groups()), path)
+                name: str = '/'.join(re.match(self._name_regex, path).groups())
+                num_issues: int = self._retrieve(name, path)
                 total_issues += num_issues
                 logger.info(f'successfully crawled {num_issues} issues, total of {total_issues} issues so far')
             break
