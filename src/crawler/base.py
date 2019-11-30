@@ -26,7 +26,7 @@ class BaseCrawler(object):
 
     _mdirs_regex: re.Pattern = re.compile(r'(.*)/.*$')
     _link_regex: re.Pattern = re.compile(r'<(?P<url>[^;]+)>; rel="(?P<rel>[^,]+)"')
-    _page_regex: re.Pattern = re.compile(r'(?<=&page=)(?P<page>\d+)$')
+    _page_regex: re.Pattern = re.compile(r'(?<=[&?]page=)(?P<page>\d+)$')
     _log_retrieve_regex: re.Pattern = re.compile(r'(?<=\?)(?P<query_params>.+)$')
 
     def _save(self: BaseCrawler, name: str, contents: dict) -> int:

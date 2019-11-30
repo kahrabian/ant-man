@@ -37,4 +37,3 @@ class CommentCrawler(BaseCrawler):
                 num_issues: int = self._retrieve(name, path)
                 total_issues += num_issues
                 logger.info(f'successfully crawled {num_issues} issues, total of {total_issues} issues so far')
-            break
