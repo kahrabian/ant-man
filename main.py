@@ -29,7 +29,8 @@ def run() -> int:
 
 
 def main() -> int:
-    config_logging('./log/crawler.log')
+    sys.setrecursionlimit(10000)
+    config_logging('./log/crawler.log', 'ERROR')
     return run()
 
 

@@ -45,9 +45,10 @@ class TopicCrawler(BaseCrawler):
             if num_repos == -1:
                 offset *= self._decrease_rate
                 query_params: str = re.findall(self._log_retrieve_regex, path)[0]
-                logger.info(f'result limiting occured while crawling {query_params}')
+                logger.info(f'result limiting {query_params}')
                 continue
             total_repos += num_repos
             offset *= self._increase_rate
             latest -= offset
-            logger.info(f'successfully crawled {num_repos} repositories, total of {total_repos} repositories so far')
+            if num_repos > 0:
+                logger.info(f'{num_repos} repositories crawled, total: {total_repos}')

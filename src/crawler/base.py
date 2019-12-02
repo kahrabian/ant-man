@@ -11,8 +11,10 @@ from urllib.parse import unquote
 import requests
 
 from ..config.base import BaseConfig
+from ..common.decorator import handle_exception
 
 logger: logging.Logger = logging.getLogger(__name__)
+
 
 class BaseCrawler(object):
     _path: str = 'https://api.github.com'
@@ -42,10 +44,11 @@ class BaseCrawler(object):
                 f.write(f'{data}\n')
         return len(contents)
 
+    @handle_exception
     def _retrieve(self: BaseCrawler, name: str, path: str, root: bool = True) -> int:
         complete_path: str = f'{self._save_path}/{self._complete_dir}/{name}.json'
         if os.path.exists(complete_path):
-            logger.info(f'already crawled {complete_path}')
+            logger.info(f'skipping {complete_path}')
             return 0
 
         incomplete_path: str = f'{self._save_path}/{self._incomplete_dir}/{name}.json'
@@ -55,21 +58,19 @@ class BaseCrawler(object):
         query_params: str = ''
         if re.search(self._log_retrieve_regex, path):
             query_params = re.findall(self._log_retrieve_regex, path)[0]
-        logger.info(f'starting crawling process for {query_params}')
+        logger.info(f'starting {query_params}')
 
         token: str = os.getenv('OAUTH_TOKEN', '')
         self._headers['Authorization'] = f'token {token}'
         response: requests.Response = requests.get(path, headers=self._headers)
         if response.headers['X-RateLimit-Remaining'] == '0':
             sleep_time: int = int(response.headers['X-RateLimit-Reset']) - datetime.now().timestamp()
-            logger.info(f'sleeping for {sleep_time} to avoid rate limiting')
+            logger.info(f'sleeping for {sleep_time}')
             sleep(sleep_time)
         content: str = response.content.decode('utf-8')
 
         if not response.ok:
             raise Exception(f'something went wrong while crawling: {content}')
-
-        logger.info(f'crawling process finished with status code {response.status_code}')
 
         page_num: str = re.findall(self._page_regex, path)[0]
         link: list = {x[1]: unquote(x[0]) for x in re.findall(self._link_regex, response.headers.get('link', ''))}
@@ -85,7 +86,7 @@ class BaseCrawler(object):
             num_contents += self._retrieve(name, link['next'], root=False)
         else:
             os.rename(f'{self._save_path}/{self._incomplete_dir}/{name}.json',
-            f'{self._save_path}/{self._complete_dir}/{name}.json')
+                      f'{self._save_path}/{self._complete_dir}/{name}.json')
 
         return num_contents
 
