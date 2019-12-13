@@ -63,14 +63,14 @@ class BaseCrawler(object):
         token: str = os.getenv('OAUTH_TOKEN', '')
         self._headers['Authorization'] = f'token {token}'
         response: requests.Response = requests.get(path, headers=self._headers)
-        if response.headers['X-RateLimit-Remaining'] == '0':
+        if response.headers.get('X-RateLimit-Remaining') == '0':
             sleep_time: int = int(response.headers['X-RateLimit-Reset']) - datetime.now().timestamp()
             logger.info(f'sleeping for {sleep_time}')
             sleep(sleep_time)
         content: str = response.content.decode('utf-8')
 
         if not response.ok:
-            raise Exception(f'something went wrong while crawling: {content}')
+            logger.error(f'something went wrong while crawling {path}: {content}')
 
         page_num: str = re.findall(self._page_regex, path)[0]
         link: list = {x[1]: unquote(x[0]) for x in re.findall(self._link_regex, response.headers.get('link', ''))}
