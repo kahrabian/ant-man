@@ -1,6 +1,6 @@
 # ant-man
 
-This projects aims to provide toolkits for crawling data from [GitHub API v3](https://developer.github.com/v3/).
+This projects aims to provide tools for crawling data from [GitHub API v3](https://developer.github.com/v3/).
 
 ## Crawlers
 
