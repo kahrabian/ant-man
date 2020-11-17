@@ -90,7 +90,7 @@ class BaseCrawler(object):
 
         return num_contents
 
-    def _crawl(self: TopicCrawler, topic_config: dict) -> None:
+    def _crawl(self: BaseCrawler, topic_config: dict) -> None:
         raise NotImplementedError(f'this method should be implemented in class {self.__class__}')
 
     def run(self: BaseCrawler) -> None:
