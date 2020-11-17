@@ -22,9 +22,7 @@ def config_logging(path: str, log_level: str = 'INFO') -> None:
 
 
 def run() -> int:
-    TopicCrawler().run()
-    IssueCrawler().run()
-    CommentCrawler().run()
+    PRFilesCrawler().run()
     return 0
 
 
